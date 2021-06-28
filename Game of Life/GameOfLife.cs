@@ -9,16 +9,24 @@ namespace Game_of_Life
 {
     class GameOfLife
     {
-        public Board GameBoard { get; set; }
-
         private readonly Dictionary<(int y, int x), Cell> _activeCells;
         private readonly Dictionary<(int y, int x), Cell> _candidateCells;
         private int _height;
         private int _width;
+        private int _ms = 250;
 
         public GameOfLife()
         {
-            GameBoard = new();
+            _activeCells = new();
+            _candidateCells = new();
+            _height = Console.WindowHeight;
+            _width = Console.WindowWidth;
+        }
+
+        public GameOfLife(Board board)
+        {
+            _activeCells = board.GetCells();
+            _candidateCells = new();
             _height = Console.WindowHeight;
             _width = Console.WindowWidth;
         }
@@ -32,7 +40,7 @@ namespace Game_of_Life
             for (int i = 0; i < 500; i++)
             {
                 CalculateNextGeneration();
-                Thread.Sleep(50);
+                Thread.Sleep(_ms);
             }
 
             Console.CursorVisible = cursorVisibility;
@@ -73,7 +81,7 @@ namespace Game_of_Life
                 if (entry.Value.IsAlive)
                 {
                     Console.SetCursorPosition(entry.Key.x, entry.Key.y);
-                    Console.Write("X");
+                    Console.Write("█");
                 }
             }
         }

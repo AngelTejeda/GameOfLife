@@ -9,17 +9,69 @@ namespace Game_of_Life
 {
     public class Board
     {
-        private readonly Dictionary<(int y, int x), Cell> _activeCells;
-        private readonly Dictionary<(int y, int x), Cell> _candidateCells;
+        private Dictionary<(int y, int x), Cell> _cells;
         private int _height;
         private int _width;
+        private int _leftMargin;
+        private int _topMargin;
+        private int _leftOffset = 0;
+        private int _topOffset = 0;
 
-        public Board()
+        public Board((int height, int width) dimensions, (int leftMargin, int topMargin) margins)
         {
-            _activeCells = new();
-            _candidateCells = new();
-            _height = Console.WindowHeight;
-            _width = Console.WindowWidth;
+            _cells = new();
+            _height = dimensions.height;
+            _width = dimensions.width;
+            _leftMargin = margins.leftMargin;
+            _topMargin = margins.topMargin;
+        }
+
+        public Dictionary<(int y, int x), Cell> GetCells()
+        {
+            return _cells;
+        }
+
+        private (int yPrime, int xPrime) CalculatePrimeCoordinates(int y, int x)
+        {
+            int yPrime = y + _topMargin + _topOffset;
+            int xPrime = x + _leftMargin + _leftOffset;
+
+            return (yPrime, xPrime);
+        }
+
+        private (int yPrime, int xPrime) CalculateOriginalCoordinates(int yPrime, int xPrime)
+        {
+            int y = yPrime - _topMargin - _topOffset;
+            int x = xPrime - _leftMargin - _leftOffset;
+
+            return (y, x);
+        }
+
+        private void DisplayCellAt(int y, int x)
+        {
+            if (!IsCoordinateDisplayed(y, x))
+                return;
+
+            (int yPrime, int xPrime) = CalculatePrimeCoordinates(y, x);
+            
+            Console.SetCursorPosition(xPrime, yPrime);
+            Console.Write("█");
+            Console.SetCursorPosition(xPrime, yPrime);
+        }
+
+        private bool IsCoordinateDisplayed(int y, int x)
+        {
+            (int yPrime, int xPrime) = CalculatePrimeCoordinates(y, x);
+            
+            // Check y
+            if (yPrime < 0 || yPrime > _height - 1)
+                return false;
+
+            // Check x
+            if (xPrime < 0 || xPrime > _width - 1)
+                return false;
+
+            return true;
         }
 
         public void PlaceFigureAt(int[,] figure, int y, int x)
@@ -34,127 +86,125 @@ namespace Game_of_Life
             }
         }
 
+        public void EditBoard(bool clearScreen = false)
+        {
+            DisplayBoard(clearScreen);
+
+            bool editing = true;
+
+            while (editing)
+            {
+                (int yPos, int xPos, ConsoleKey keyPressed) = ConsoleMenuHandler.MoveCursor(
+                    (_height, _width),
+                    (_leftMargin + 1, _topMargin + 1),
+                    Console.GetCursorPosition());
+
+                switch(keyPressed)
+                {
+                    case ConsoleKey.Enter:
+                        {
+                            (int y, int x) = CalculateOriginalCoordinates(yPos, xPos);
+                            PlaceCellAt(y, x);
+                            break;
+                        } 
+
+                    case ConsoleKey.Backspace:
+                        {
+                            (int y, int x) = CalculateOriginalCoordinates(yPos, xPos);
+                            RemoveCellAt(y, x);
+                            break;
+                        }
+
+                    case ConsoleKey.Escape:
+                        {
+                            editing = false;
+                            break;
+                        }
+                }
+            }
+        }
+
         public void PlaceCellAt(int y, int x)
         {
-            _activeCells.TryAdd((y, x), new Cell(true));
+            _cells.TryAdd((y, x), new Cell(true));
+
+            if (!IsCoordinateDisplayed(y, x))
+                return;
+
+            (int yPrime, int xPrime) = CalculatePrimeCoordinates(y, x);
+
+            Console.SetCursorPosition(xPrime, yPrime);
+            Console.Write("█");
+            Console.SetCursorPosition(xPrime, yPrime);
         }
 
         public void RemoveCellAt(int y, int x)
         {
-            _activeCells.Remove((y, x));
-        }
+            _cells.Remove((y, x));
 
-        public void DisplayBoard()
-        {
-            Console.Clear();
-
-            foreach ((int y, int x) in _activeCells.Keys)
-            {
-                // Prevents writing outside the window.
-                if (y < 0 || x < 0 || y > _height || x > _width)
-                    continue;
-
-                Console.SetCursorPosition(x, y);
-                Console.Write("X");
-            }
-
-            Console.SetCursorPosition(0, 0);
-        }
-
-        public void Play()
-        {
-            bool cursorVisibility = Console.CursorVisible;
-
-            Console.CursorVisible = false;
-
-            for (int i=0; i<500; i++)
-            {
-                CalculateNextGeneration();
-                Thread.Sleep(50);
-            }
-
-            Console.CursorVisible = cursorVisibility;
-        }
-
-        private void CalculateNextGeneration()
-        {
-            foreach (KeyValuePair<(int y, int x), Cell> entry in _activeCells)
-            {
-                ExploreCellNeighbours(entry);
-            }
-
-            foreach (KeyValuePair<(int y, int x), Cell> entry in _activeCells) {
-                entry.Value.NextGeneration();
-
-                if (!entry.Value.IsAlive)
-                    _activeCells.Remove(entry.Key);
-
-                // Display
-                if (!entry.Value.IsAlive)
-                {
-                    Console.SetCursorPosition(entry.Key.x, entry.Key.y);
-                    Console.Write(" ");
-                }
-            }
-
-            foreach (KeyValuePair<(int y, int x), Cell> entry in _candidateCells)
-            {
-                entry.Value.NextGeneration();
-
-                if (entry.Value.IsAlive)
-                    _activeCells.Add(entry.Key, new Cell(true));
-
-                _candidateCells.Remove(entry.Key);
-
-                // Display
-                if (entry.Value.IsAlive)
-                {
-                    Console.SetCursorPosition(entry.Key.x, entry.Key.y);
-                    Console.Write("X");
-                }
-            }
-        }
-
-
-        // Counts the number of live cells arround a certain cell.
-        // The dead cells around it will be added to the _candidateCells dictionary and their
-        // "Neighbours" value will increase.
-        /*
-         X X X
-         X O X
-         X X X
-         */
-        private void ExploreCellNeighbours(KeyValuePair<(int, int), Cell> entry)
-        {
-            const int outOfBoundsLimit = 200;
-
-            if (!entry.Value.IsAlive)
+            if (!IsCoordinateDisplayed(y, x))
                 return;
 
-            (int y, int x) = entry.Key;
+            (int yPrime, int xPrime) = CalculatePrimeCoordinates(y, x);
 
-            for (int i=y-1; i<=y+1; i++)
+            Console.SetCursorPosition(xPrime, yPrime);
+            Console.Write(" ");
+            Console.SetCursorPosition(xPrime, yPrime);
+        }
+
+        private void SetCursorInsideBoard(int y, int x)
+        {
+            Console.SetCursorPosition(_leftMargin + x, _topMargin + y);
+        }
+
+        public void DisplayBoard(bool clearScreen = false)
+        {
+            if (clearScreen)
+                Console.Clear();
+
+            // Display Border
+
+            // Corners
+            Console.SetCursorPosition(_leftMargin, _topMargin);
+            Console.Write("┌");
+            Console.SetCursorPosition(_leftMargin + _width + 1, _topMargin);
+            Console.Write("┐");
+            Console.SetCursorPosition(_leftMargin, _topMargin + _height + 1);
+            Console.Write("└");
+            Console.SetCursorPosition(_leftMargin + _width + 1, _topMargin + _height + 1);
+            Console.Write("┘");
+
+            // Horizontal Lines
+            for (int i = 1; i < _width + 1; i++)
             {
-                for (int j=x-1; j<=x+1; j++)
-                {
-                    if (i < -outOfBoundsLimit || i > _width + outOfBoundsLimit)
-                        continue;
-
-                    if (j < -outOfBoundsLimit || j > _height + outOfBoundsLimit)
-                        continue;
-
-                    if (i == y && j == x)
-                        continue;
-
-                    if (_activeCells.ContainsKey((i, j)))
-                        entry.Value.Neighbours++;
-                    else
-                    {
-                        _candidateCells.TryAdd((i, j), new Cell(false));
-                        _candidateCells[(i, j)].Neighbours++;
-                    }
-                }
+                Console.SetCursorPosition(_leftMargin + i, _topMargin);
+                Console.Write("─");
+                Console.SetCursorPosition(_leftMargin + i, _topMargin + _height + 1);
+                Console.Write("─");
             }
+
+            // Vertical Lines
+            for (int i = 1; i < _height + 1; i++)
+            {
+                Console.SetCursorPosition(_leftMargin, _topMargin + i);
+                Console.Write("│");
+                Console.SetCursorPosition(_leftMargin + _width + 1, _topMargin + i);
+                Console.Write("│");
+            }
+            Console.SetCursorPosition(_leftMargin + 1, _topMargin + 1);
+
+
+            // Display Cells
+            foreach ((int y, int x) in _cells.Keys)
+            {
+                // Prevents writing outside the window.
+                if (y < 0 || x < 0 || y > _topMargin + _height || x > _leftMargin + _width)
+                    continue;
+
+                DisplayCellAt(y, x);
+            }
+
+            Console.SetCursorPosition(_leftMargin + 1, _topMargin + 1);
         }
     }
 }

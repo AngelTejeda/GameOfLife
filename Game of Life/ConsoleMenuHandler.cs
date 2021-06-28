@@ -9,19 +9,19 @@ namespace Game_of_Life
     class ConsoleMenuHandler
     {
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Interoperability", "CA1416:Validate platform compatibility", Justification = "<Pending>")]
-        public static (int, int, ConsoleKey) MoveCursor(int heigth, int width)
+
+        public static (int, int, ConsoleKey) MoveCursor(
+            (int height, int width) dimensions,
+            (int leftMargin, int topMargin) margins,
+            (int xPos, int yPos) cursorPosition)
         {
             bool defaultVisibility = Console.CursorVisible;
 
             Console.CursorVisible = true;
 
             ConsoleKey pressedKey = ConsoleKey.Escape;
-            int xPos = 0;
-            int yPos = 0;
             bool exitLoop = false;
             Task task = null;
-
-            Console.SetCursorPosition(xPos, yPos);
 
             while (!exitLoop)
             {
@@ -37,34 +37,34 @@ namespace Game_of_Life
                     switch (pressedKey)
                     {
                         case ConsoleKey.RightArrow:
-                            if (xPos < width - 1)
-                                xPos++;
+                            if (cursorPosition.xPos < margins.leftMargin + dimensions.width - 1)
+                                cursorPosition.xPos++;
                             break;
                         case ConsoleKey.LeftArrow:
-                            if (xPos > 0)
-                                xPos--;
+                            if (cursorPosition.xPos > margins.leftMargin)
+                                cursorPosition.xPos--;
                             break;
                         case ConsoleKey.DownArrow:
-                            if (yPos < heigth - 1)
-                                yPos++;
+                            if (cursorPosition.yPos < margins.topMargin + dimensions.height - 1)
+                                cursorPosition.yPos++;
                             break;
                         case ConsoleKey.UpArrow:
-                            if (yPos > 0)
-                                yPos--;
+                            if (cursorPosition.yPos > margins.topMargin)
+                                cursorPosition.yPos--;
                             break;
                         default:
                             exitLoop = true;
                             break;
                     }
 
-                    Console.SetCursorPosition(xPos, yPos);
+                    Console.SetCursorPosition(cursorPosition.xPos, cursorPosition.yPos);
 
                     task = null;
                 }
             }
             
             Console.CursorVisible = defaultVisibility;
-            return (yPos, xPos, pressedKey);
+            return (cursorPosition.yPos, cursorPosition.xPos, pressedKey);
         }
     }
 }

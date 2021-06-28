@@ -23,11 +23,15 @@ namespace Game_of_Life
         {
             ShowWindow(ThisConsole, MAXIMIZE);
 
-            (int yPos, int xPos, ConsoleKey keyPressed) = ConsoleMenuHandler.MoveCursor(Console.WindowHeight, Console.WindowWidth);
-            Console.WriteLine($"{keyPressed} pressed at ({yPos}, {xPos})");
-            Console.Read();
+            //(int yPos, int xPos, ConsoleKey keyPressed) = ConsoleMenuHandler.MoveCursor(Console.WindowHeight, Console.WindowWidth);
+            //Console.WriteLine($"{keyPressed} pressed at ({yPos}, {xPos})");
+            //Console.Read();
 
-            Board board = new();
+            Board board = new((20, 20), (2, 2));
+
+            board.EditBoard();
+            board.DisplayBoard();
+            Console.Read();
 
             int[,] boat = new int[,]
             {
@@ -74,15 +78,38 @@ namespace Game_of_Life
                 { 0, 0, 1, 0, 0 }
             };
 
+            int[,] flower = new int[,]
+            {
+                { 0, 0, 1, 1, 1, 0, 0, 0, 1, 1, 1, 0, 0 },
+                { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+                { 1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 1 },
+                { 1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 1 },
+                { 1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 1 },
+                { 0, 0, 1, 1, 1, 0, 0, 0, 1, 1, 1, 0, 0 },
+                { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+                { 0, 0, 1, 1, 1, 0, 0, 0, 1, 1, 1, 0, 0 },
+                { 1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 1 },
+                { 1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 1 },
+                { 1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 1 },
+                { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+                { 0, 0, 1, 1, 1, 0, 0, 0, 1, 1, 1, 0, 0 },
+            };
+
             //board.PlaceFigureAt(ship, 1, 1);
             //board.PlaceFigureAt(ship, 1, 6);
             //board.PlaceFigureAt(ship, 6, 1);
 
-            board.PlaceFigureAt(eye, 20, 50);
+            //board.PlaceFigureAt(eye, 20, 50);
             //board.PlaceFigureAt(blinker, 1, 10);
 
+            //board.EditPiece();
+
+            board.PlaceFigureAt(flower, 20, 50);
+
             board.DisplayBoard();
-            board.Play();
+
+            GameOfLife game = new(board);
+            game.Play();
         }
     }
 }
