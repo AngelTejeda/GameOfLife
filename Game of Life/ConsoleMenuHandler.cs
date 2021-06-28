@@ -64,7 +64,7 @@ namespace Game_of_Life
             }
             
             Console.CursorVisible = defaultVisibility;
-            return (cursorPosition.yPos, cursorPosition.xPos, pressedKey);
+            return (cursorPosition.yPos - margins.topMargin, cursorPosition.xPos - margins.leftMargin, pressedKey);
         }
     }
 }

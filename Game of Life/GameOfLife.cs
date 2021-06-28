@@ -9,23 +9,23 @@ namespace Game_of_Life
 {
     class GameOfLife
     {
-        private readonly Dictionary<(int y, int x), Cell> _activeCells;
         private readonly Dictionary<(int y, int x), Cell> _candidateCells;
+        private Board<Cell> _board;
         private int _height;
         private int _width;
         private int _ms = 250;
 
-        public GameOfLife()
+        public GameOfLife((int heigth, int width) dimensions, (int topMargin, int leftMargin) margins)
         {
-            _activeCells = new();
+            _board = new(dimensions, margins);
             _candidateCells = new();
             _height = Console.WindowHeight;
             _width = Console.WindowWidth;
         }
 
-        public GameOfLife(Board board)
+        public GameOfLife(Board<Cell> board)
         {
-            _activeCells = board.GetCells();
+            _board = board;
             _candidateCells = new();
             _height = Console.WindowHeight;
             _width = Console.WindowWidth;
@@ -48,41 +48,27 @@ namespace Game_of_Life
 
         private void CalculateNextGeneration()
         {
-            foreach (KeyValuePair<(int y, int x), Cell> entry in _activeCells)
+            foreach (KeyValuePair<(int y, int x), Cell> entry in _board.GetCells())
             {
                 ExploreCellNeighbours(entry);
             }
 
-            foreach (KeyValuePair<(int y, int x), Cell> entry in _activeCells)
+            foreach (KeyValuePair<(int y, int x), Cell> entry in _board.GetCells())
             {
                 entry.Value.NextGeneration();
 
                 if (!entry.Value.IsAlive)
-                    _activeCells.Remove(entry.Key);
-
-                // Display
-                if (!entry.Value.IsAlive)
-                {
-                    Console.SetCursorPosition(entry.Key.x, entry.Key.y);
-                    Console.Write(" ");
-                }
+                    _board.RemoveCellAt(entry.Key.y, entry.Key.x, true);
             }
 
             foreach (KeyValuePair<(int y, int x), Cell> entry in _candidateCells)
             {
                 entry.Value.NextGeneration();
 
-                if (entry.Value.IsAlive)
-                    _activeCells.Add(entry.Key, new Cell(true));
-
                 _candidateCells.Remove(entry.Key);
 
-                // Display
                 if (entry.Value.IsAlive)
-                {
-                    Console.SetCursorPosition(entry.Key.x, entry.Key.y);
-                    Console.Write("█");
-                }
+                    _board.PlaceCellAt(entry.Key.y, entry.Key.x, new Cell(), true);
             }
         }
 
@@ -117,7 +103,7 @@ namespace Game_of_Life
                     if (i == y && j == x)
                         continue;
 
-                    if (_activeCells.ContainsKey((i, j)))
+                    if (_board.GetCells().ContainsKey((i, j)))
                         entry.Value.Neighbours++;
                     else
                     {

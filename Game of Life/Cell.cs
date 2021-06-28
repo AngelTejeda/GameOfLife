@@ -16,6 +16,11 @@ namespace Game_of_Life
             IsAlive = isAlive;
         }
 
+        public Cell()
+        {
+            IsAlive = true;
+        }
+
         public void NextGeneration()
         {
             if (IsAlive && (Neighbours < 2 || Neighbours > 3))

@@ -23,16 +23,6 @@ namespace Game_of_Life
         {
             ShowWindow(ThisConsole, MAXIMIZE);
 
-            //(int yPos, int xPos, ConsoleKey keyPressed) = ConsoleMenuHandler.MoveCursor(Console.WindowHeight, Console.WindowWidth);
-            //Console.WriteLine($"{keyPressed} pressed at ({yPos}, {xPos})");
-            //Console.Read();
-
-            Board board = new((20, 20), (2, 2));
-
-            board.EditBoard();
-            board.DisplayBoard();
-            Console.Read();
-
             int[,] boat = new int[,]
             {
                 { 1, 1, 0 },
@@ -103,8 +93,11 @@ namespace Game_of_Life
             //board.PlaceFigureAt(blinker, 1, 10);
 
             //board.EditPiece();
+            Board<Cell> board = new((20, 20), (2, 2));
+            BoardManager<Cell> boardManager = new(board);
 
-            board.PlaceFigureAt(flower, 20, 50);
+            //board.EditBoard();
+            boardManager.PlaceFigureAt(flower, 10, 10);
 
             board.DisplayBoard();
 
