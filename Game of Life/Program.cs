@@ -6,9 +6,20 @@
         {
             ConsoleExtension.ApplyWindowAction(ConsoleExtension.WindowActions.MAXIMIZE);
 
-            Board<Cell> board = new((40, 40), (5, 5));
+            (int height, int width) = ConsoleExtension.GetWindowSize();
+            int topMargin = 8;
+            int bottomMargin = 5;
+            int leftMargin = 5;
+            int rightMargin = 5;
+
+            height -= topMargin + bottomMargin + 2;
+            width -= leftMargin + rightMargin + 2;
+            
+
+            Board<Cell> board = new((height, width), (topMargin, leftMargin));
             BoardManager<Cell> boardManager = new(board);
 
+            boardManager.DrawTitle();
             boardManager.PlaceFigureAt(TempFigures.GetFlower(), 10, 10);
             boardManager.EditBoard();
 

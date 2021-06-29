@@ -3,6 +3,32 @@ using System.Collections.Generic;
 
 namespace Game_of_Life
 {
+    #region Board Explanation
+    /*
+    ┌───────────────────────────────────────────────┐ ← Window
+    │                               ┬               │
+    │                               │               │
+    │                               │ topMargin     │
+    │          Board                │               │
+    │            ↓                  ┴               │
+    │            ┌───────────────────────┐ ┬        │
+    │            │X ← (0,0)              │ │        │
+    │ leftMargin │                       │ │ height │
+    │├──────────┤│                       │ │        │
+    │            │                       │ │        │
+    │            └───────────────────────┘ ┴        │
+    │            ├───────────────────────┤          │
+    │                      width                    │
+    └───────────────────────────────────────────────┘
+     ███  ███  ██   ██ ████     ███  █████    █     █████ █████ █████
+    █    █   █ █ █ █ █ █       █   █ █        █       █   █     █
+    █ ██ █████ █  █  █ ███     █   █ ███      █       █   ███   ███
+    █  █ █   █ █  █  █ █       █   █ █        █       █   █     █
+     ██  █   █ █     █ ████     ███  █        █████ █████ █     █████
+    Even if the offset changes, the coordinate (0, 0) for the board will always be the same.
+    */
+    #endregion
+
     public class Board<T> where T : new()
     {
         private readonly Dictionary<(int y, int x), T> _cells;
@@ -22,6 +48,7 @@ namespace Game_of_Life
             _topMargin = margins.topMargin;
         }
 
+        #region Getters
         public Dictionary<(int y, int x), T> GetCells()
         {
             return _cells;
@@ -36,57 +63,9 @@ namespace Game_of_Life
         {
             return (_topMargin, _leftMargin);
         }
+        #endregion
 
-        public void MoveLeft(bool displayChanges = true)
-        {
-            if (displayChanges) ClearBoard();
-
-            _leftOffset--;
-
-            if (displayChanges) DrawCells();
-        }
-
-        public void MoveRight(bool displayChanges = true)
-        {
-            if (displayChanges) ClearBoard();
-
-            _leftOffset++;
-
-            if (displayChanges) DrawCells();
-        }
-
-        public void MoveUp(bool displayChanges = true)
-        {
-            if (displayChanges) ClearBoard();
-
-            _topOffset--;
-
-            if (displayChanges) DrawCells();
-        }
-
-        public void MoveDown(bool displayChanges = true)
-        {
-            if (displayChanges) ClearBoard();
-
-            _topOffset++;
-
-            if (displayChanges) DrawCells();
-        }
-
-        public void ClearBoard()
-        {
-            foreach ((int y, int x) in _cells.Keys)
-            {
-                DisplayCharAt(' ', y, x);
-            }
-        }
-
-        public void RefreshBoard()
-        {
-            ClearBoard();
-            DrawCells();
-        }
-
+        #region Coordinates
         // Given the coordinate (y, x) of a cell, it calculates the position inside the board where
         // the cell should be displayed considering the current offset and the position of the board.
         private (int yPos, int xPos) CalculateBoardCoordinates(int y, int x)
@@ -123,8 +102,9 @@ namespace Game_of_Life
 
             return true;
         }
+        #endregion
 
-
+        #region Display
         // Writes a certain character inside the board. If the coordinate (y, x) is outside the
         // board range, it will  not be displayed.
         private void DisplayCharAt(char c, int y, int x)
@@ -137,40 +117,6 @@ namespace Game_of_Life
             SetCursorInsideBoard(xPos, yPos);
             Console.Write(c);
             SetCursorInsideBoard(xPos, yPos);
-        }
-
-        // Adds a coordinate to the HashTable of selected coordinates.
-        // If desired and posible to do so, the cell will be displayed in the board.
-        public void PlaceCellWithKey(int y, int x, T cellObject, bool display = true)
-        {
-            _cells.TryAdd((y, x), cellObject);
-
-            if (display)
-                DisplayCharAt('█', y, x);
-        }
-
-        public void PlaceCellAtBoard(int yPos, int xPos, T cellObject, bool display = true)
-        {
-            (int y, int x) = CalculateCellCoordinates(yPos, xPos);
-
-            PlaceCellWithKey(y, x, cellObject, display);
-        }
-
-        // Removes a coordinate from the HashTable of selected coordinates.
-        // If desired and posible to do so, the cell will be removed from the board.
-        public void RemoveCellWithKey(int y, int x, bool display = true)
-        {
-            _cells.Remove((y, x));
-
-            if (display)
-                DisplayCharAt(' ', y, x);
-        }
-
-        public void RemoveCellAtBoard(int yPos, int xPos, bool display = true)
-        {
-            (int y, int x) = CalculateCellCoordinates(yPos, xPos);
-
-            RemoveCellWithKey(y, x, display);
         }
 
         private void SetCursorInsideBoard(int x, int y)
@@ -212,20 +158,111 @@ namespace Game_of_Life
         private void DrawCells()
         {
             foreach ((int y, int x) in _cells.Keys)
-            {
                 DisplayCharAt('█', y, x);
+        }
+
+        public void ClearBoard()
+        {
+            foreach ((int y, int x) in _cells.Keys)
+            {
+                DisplayCharAt(' ', y, x);
             }
         }
 
-        public void DisplayBoard(bool clearScreen = true)
+        public void RefreshBoard()
         {
-            if (clearScreen)
-                Console.Clear();
+            ClearBoard();
+            DrawCells();
+        }
+
+        public void DisplayBoard(bool clearBoard = true)
+        {
+            if (clearBoard)
+                ClearBoard();
 
             DrawBoarder();
             DrawCells();
 
             SetCursorInsideBoard(0, 0);
         }
+        #endregion
+
+        #region Cell Management
+        // Adds a coordinate to the Dictionary of selected coordinates.
+        // If desired and posible to do so, the cell will be displayed in the board.
+        public void PlaceCellWithKey(int y, int x, T cellObject, bool display = true)
+        {
+            _cells.TryAdd((y, x), cellObject);
+
+            if (display)
+                DisplayCharAt('█', y, x);
+        }
+
+        // Removes a coordinate from the Dictionary of selected coordinates.
+        // If desired and posible to do so, the cell will be removed from the board.
+        public void RemoveCellWithKey(int y, int x, bool display = true)
+        {
+            _cells.Remove((y, x));
+
+            if (display)
+                DisplayCharAt(' ', y, x);
+        }
+
+        // Recieves a coordinate (yPos, xPos) inside the board and adds its corresponding value to the
+        // Dictionary.
+        public void PlaceCellAtBoard(int yPos, int xPos, T cellObject, bool display = true)
+        {
+            (int y, int x) = CalculateCellCoordinates(yPos, xPos);
+
+            PlaceCellWithKey(y, x, cellObject, display);
+        }
+
+        // Recieves a coordinate (yPos, xPos) inside the board and removes its corresponding value from the
+        // Dictionary.
+        public void RemoveCellAtBoard(int yPos, int xPos, bool display = true)
+        {
+            (int y, int x) = CalculateCellCoordinates(yPos, xPos);
+
+            RemoveCellWithKey(y, x, display);
+        }
+        #endregion
+
+        #region Offsets
+        public void MoveLeft(bool displayChanges = true)
+        {
+            if (displayChanges) ClearBoard();
+
+            _leftOffset--;
+
+            if (displayChanges) DrawCells();
+        }
+
+        public void MoveRight(bool displayChanges = true)
+        {
+            if (displayChanges) ClearBoard();
+
+            _leftOffset++;
+
+            if (displayChanges) DrawCells();
+        }
+
+        public void MoveUp(bool displayChanges = true)
+        {
+            if (displayChanges) ClearBoard();
+
+            _topOffset--;
+
+            if (displayChanges) DrawCells();
+        }
+
+        public void MoveDown(bool displayChanges = true)
+        {
+            if (displayChanges) ClearBoard();
+
+            _topOffset++;
+
+            if (displayChanges) DrawCells();
+        }
+        #endregion
     }
 }

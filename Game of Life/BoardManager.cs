@@ -93,5 +93,32 @@ namespace Game_of_Life
                 }
             }
         }
+
+        public void DrawTitle()
+        {
+            //The title is 65 characters long and 5 characters tall.
+            int margin = (_board.GetDimensions().width - 65) / 2;
+            margin += _board.GetMargins().leftMargin;
+
+            WriteWithMargin(margin, 2, "" +
+                " ███  ███  ██   ██ ████     ███  █████    █     █████ █████ █████\n" +
+                "█    █   █ █ █ █ █ █       █   █ █        █       █   █     █\n" +
+                "█ ██ █████ █  █  █ ███     █   █ ███      █       █   ███   ███\n" +
+                "█  █ █   █ █  █  █ █       █   █ █        █       █   █     █\n" +
+                " ██  █   █ █     █ ████     ███  █        █████ █████ █     █████\n");
+        }
+
+        private void WriteWithMargin(int margin, int line, string text)
+        {
+            Console.SetCursorPosition(margin, line);
+
+            for(int i=0; i<text.Length; i++)
+            {
+                if (text[i] == '\n')
+                    Console.SetCursorPosition(margin, ++line);
+                else
+                    Console.Write(text[i]);
+            }
+        }
     }
 }
