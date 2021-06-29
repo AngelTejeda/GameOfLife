@@ -12,7 +12,7 @@ namespace Game_of_Life
 
         public static (int, int, ConsoleKey) MoveCursor(
             (int height, int width) dimensions,
-            (int leftMargin, int topMargin) margins,
+            (int topMargin, int leftMargin) margins,
             (int xPos, int yPos) cursorPosition)
         {
             bool defaultVisibility = Console.CursorVisible;

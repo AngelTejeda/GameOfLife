@@ -10,10 +10,10 @@ namespace Game_of_Life
     class GameOfLife
     {
         private readonly Dictionary<(int y, int x), Cell> _candidateCells;
-        private Board<Cell> _board;
-        private int _height;
-        private int _width;
-        private int _ms = 250;
+        private readonly Board<Cell> _board;
+        private readonly int _height;
+        private readonly int _width;
+        private readonly int _ms = 250;
 
         public GameOfLife((int heigth, int width) dimensions, (int topMargin, int leftMargin) margins)
         {
@@ -58,7 +58,7 @@ namespace Game_of_Life
                 entry.Value.NextGeneration();
 
                 if (!entry.Value.IsAlive)
-                    _board.RemoveCellAt(entry.Key.y, entry.Key.x, true);
+                    _board.RemoveCellWithKey(entry.Key.y, entry.Key.x);
             }
 
             foreach (KeyValuePair<(int y, int x), Cell> entry in _candidateCells)
@@ -68,7 +68,7 @@ namespace Game_of_Life
                 _candidateCells.Remove(entry.Key);
 
                 if (entry.Value.IsAlive)
-                    _board.PlaceCellAt(entry.Key.y, entry.Key.x, new Cell(), true);
+                    _board.PlaceCellWithKey(entry.Key.y, entry.Key.x, new Cell());
             }
         }
 

@@ -9,11 +9,11 @@ namespace Game_of_Life
 {
     public class Board<T> where T : new()
     {
-        private Dictionary<(int y, int x), T> _cells;
-        private int _height;
-        private int _width;
-        private int _leftMargin;
-        private int _topMargin;
+        private readonly Dictionary<(int y, int x), T> _cells;
+        private readonly int _height;
+        private readonly int _width;
+        private readonly int _leftMargin;
+        private readonly int _topMargin;
         private int _leftOffset = 0;
         private int _topOffset = 0;
 
@@ -29,6 +29,66 @@ namespace Game_of_Life
         public Dictionary<(int y, int x), T> GetCells()
         {
             return _cells;
+        }
+
+        public (int height, int width) GetDimensions()
+        {
+            return (_height, _width);
+        }
+
+        public (int topMargin, int leftMargin) GetMargins()
+        {
+            return (_topMargin, _leftMargin);
+        }
+
+        public void MoveLeft(bool displayChanges = true)
+        {
+            if (displayChanges) ClearBoard();
+
+            _leftOffset--;
+
+            if (displayChanges) DrawCells();
+        }
+
+        public void MoveRight(bool displayChanges = true)
+        {
+            if (displayChanges) ClearBoard();
+
+            _leftOffset++;
+
+            if (displayChanges) DrawCells();
+        }
+
+        public void MoveUp(bool displayChanges = true)
+        {
+            if (displayChanges) ClearBoard();
+
+            _topOffset--;
+
+            if (displayChanges) DrawCells();
+        }
+
+        public void MoveDown(bool displayChanges = true)
+        {
+            if (displayChanges) ClearBoard();
+
+            _topOffset++;
+
+            if (displayChanges) DrawCells();
+        }
+
+        public void ClearBoard()
+        {
+            foreach ((int y, int x) in _cells.Keys)
+            {
+                DisplayCharAt(' ', y, x);
+            }
+        }
+
+        public void RefreshBoard()
+        {
+            ClearBoard();
+            DrawCells();
         }
 
         // Given the coordinate (y, x) of a cell, it calculates the position inside the board where
@@ -67,44 +127,7 @@ namespace Game_of_Life
 
             return true;
         }
-
-        public void EditBoard(bool clearScreen = false)
-        {
-            DisplayBoard(clearScreen);
-
-            bool editing = true;
-
-            while (editing)
-            {
-                (int yPos, int xPos, ConsoleKey keyPressed) = ConsoleMenuHandler.MoveCursor(
-                    (_height, _width),
-                    (_leftMargin + 1, _topMargin + 1),
-                    Console.GetCursorPosition());
-
-                switch(keyPressed)
-                {
-                    case ConsoleKey.Enter:
-                        {
-                            (int y, int x) = CalculateCellCoordinates(yPos, xPos);
-                            PlaceCellAt(y, x, new T(), true);
-                            break;
-                        } 
-
-                    case ConsoleKey.Backspace:
-                        {
-                            (int y, int x) = CalculateCellCoordinates(yPos, xPos);
-                            RemoveCellAt(y, x, true);
-                            break;
-                        }
-
-                    case ConsoleKey.Escape:
-                        {
-                            editing = false;
-                            break;
-                        }
-                }
-            }
-        }
+        
 
         // Writes a certain character inside the board. If the coordinate (y, x) is outside the
         // board range, it will  not be displayed.
@@ -113,16 +136,16 @@ namespace Game_of_Life
             if (!IsCoordinateDisplayed(y, x))
                 return;
 
-            (int yPrime, int xPrime) = CalculateBoardCoordinates(y, x);
+            (int yPos, int xPos) = CalculateBoardCoordinates(y, x);
 
-            SetCursorInsideBoard(xPrime, yPrime);
+            SetCursorInsideBoard(xPos, yPos);
             Console.Write(c);
-            SetCursorInsideBoard(xPrime, yPrime);
+            SetCursorInsideBoard(xPos, yPos);
         }
 
         // Adds a coordinate to the HashTable of selected coordinates.
         // If desired and posible to do so, the cell will be displayed in the board.
-        public void PlaceCellAt(int y, int x, T cellObject, bool display = false)
+        public void PlaceCellWithKey(int y, int x, T cellObject, bool display = true)
         {
             _cells.TryAdd((y, x), cellObject);
 
@@ -130,14 +153,28 @@ namespace Game_of_Life
                 DisplayCharAt('█', y, x);
         }
 
+        public void PlaceCellAtBoard(int yPos, int xPos, T cellObject, bool display = true)
+        {
+            (int y, int x) = CalculateCellCoordinates(yPos, xPos);
+
+            PlaceCellWithKey(y, x, cellObject, display);
+        }
+
         // Removes a coordinate from the HashTable of selected coordinates.
         // If desired and posible to do so, the cell will be removed from the board.
-        public void RemoveCellAt(int y, int x, bool display = false)
+        public void RemoveCellWithKey(int y, int x, bool display = true)
         {
             _cells.Remove((y, x));
 
             if (display)
                 DisplayCharAt(' ', y, x);
+        }
+
+        public void RemoveCellAtBoard(int yPos, int xPos, bool display = true)
+        {
+            (int y, int x) = CalculateCellCoordinates(yPos, xPos);
+
+            RemoveCellWithKey(y, x, display);
         }
 
         private void SetCursorInsideBoard(int x, int y)
@@ -178,14 +215,13 @@ namespace Game_of_Life
 
         private void DrawCells()
         {
-            // Display Cells
             foreach ((int y, int x) in _cells.Keys)
             {
                 DisplayCharAt('█', y, x);
             }
         }
 
-        public void DisplayBoard(bool clearScreen = false)
+        public void DisplayBoard(bool clearScreen = true)
         {
             if (clearScreen)
                 Console.Clear();
