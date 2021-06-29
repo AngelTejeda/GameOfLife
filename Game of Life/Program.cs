@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Runtime.InteropServices;
-
-namespace Game_of_Life
+﻿namespace Game_of_Life
 {
     class Program
     {

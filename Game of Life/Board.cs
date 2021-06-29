@@ -1,9 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Game_of_Life
 {
@@ -116,7 +112,7 @@ namespace Game_of_Life
         private bool IsCoordinateDisplayed(int y, int x)
         {
             (int yPos, int xPos) = CalculateBoardCoordinates(y, x);
-            
+
             // Check y
             if (yPos < 0 || yPos > _height - 1)
                 return false;
@@ -127,7 +123,7 @@ namespace Game_of_Life
 
             return true;
         }
-        
+
 
         // Writes a certain character inside the board. If the coordinate (y, x) is outside the
         // board range, it will  not be displayed.

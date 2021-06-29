@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Game_of_Life
 {
@@ -15,7 +11,7 @@ namespace Game_of_Life
             _board = board;
         }
 
-        public BoardManager((int width, int heigth) dimensions, (int leftMargin, int topMargin) margins) 
+        public BoardManager((int width, int heigth) dimensions, (int leftMargin, int topMargin) margins)
         {
             _board = new(dimensions, margins);
         }
@@ -40,7 +36,7 @@ namespace Game_of_Life
 
             margins.topMargin++;
             margins.leftMargin++;
-            
+
             _board.DisplayBoard(clearScreen);
 
 

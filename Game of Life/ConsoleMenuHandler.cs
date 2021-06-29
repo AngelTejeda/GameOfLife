@@ -1,15 +1,10 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace Game_of_Life
 {
     class ConsoleMenuHandler
     {
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Interoperability", "CA1416:Validate platform compatibility", Justification = "<Pending>")]
-
         public static (int, int, ConsoleKey) MoveCursor(
             (int height, int width) dimensions,
             (int topMargin, int leftMargin) margins,
@@ -62,7 +57,7 @@ namespace Game_of_Life
                     task = null;
                 }
             }
-            
+
             Console.CursorVisible = defaultVisibility;
             return (cursorPosition.yPos - margins.topMargin, cursorPosition.xPos - margins.leftMargin, pressedKey);
         }
