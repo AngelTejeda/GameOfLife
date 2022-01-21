@@ -6,26 +6,17 @@ namespace Game_of_Life
 {
     class GameOfLife
     {
-        private readonly Dictionary<(int y, int x), Cell> _candidateCells;
-        private readonly Board<Cell> _board;
-        private readonly int _height;
-        private readonly int _width;
+        private readonly Board _board;
         private readonly int _ms = 250;
 
         public GameOfLife((int heigth, int width) dimensions, (int topMargin, int leftMargin) margins)
         {
             _board = new(dimensions, margins);
-            _candidateCells = new();
-            _height = Console.WindowHeight;
-            _width = Console.WindowWidth;
         }
 
-        public GameOfLife(Board<Cell> board)
+        public GameOfLife(Board board)
         {
             _board = board;
-            _candidateCells = new();
-            _height = Console.WindowHeight;
-            _width = Console.WindowWidth;
         }
 
         public void Play()
@@ -45,70 +36,62 @@ namespace Game_of_Life
 
         private void CalculateNextGeneration()
         {
-            foreach (KeyValuePair<(int y, int x), Cell> entry in _board.GetCells())
+            HashSet<Coordinate> deadCells = new();
+            HashSet<Coordinate> newCells = new();
+            HashSet<Coordinate> candidateCells = new();
+
+            // Find the cells that will die.
+            foreach (Coordinate coordinate in _board.CellsCoordinates)
             {
-                ExploreCellNeighbours(entry);
+                List<Coordinate> neighbours = GetDeadNeighbours(coordinate);
+                
+                int liveNeighbours = 8 - neighbours.Count;
+
+                candidateCells.UnionWith(neighbours);
+
+                if (liveNeighbours < 2 || liveNeighbours > 3)
+                    deadCells.Add(coordinate);
             }
 
-            foreach (KeyValuePair<(int y, int x), Cell> entry in _board.GetCells())
+            // Find the cells wich will be born.
+            foreach (Coordinate cell in candidateCells)
             {
-                entry.Value.NextGeneration();
+                List<Coordinate> neighbours = GetDeadNeighbours(cell);
 
-                if (!entry.Value.IsAlive)
-                    _board.RemoveCellWithKey(entry.Key.y, entry.Key.x);
+                int liveNeighbours = 8 - neighbours.Count;
+
+                if (liveNeighbours == 3)
+                    newCells.Add(cell);
             }
 
-            foreach (KeyValuePair<(int y, int x), Cell> entry in _candidateCells)
-            {
-                entry.Value.NextGeneration();
+            // Remove dead cells.
+            foreach (Coordinate cell in deadCells)
+                _board.RemoveCellWithKey(cell);
 
-                _candidateCells.Remove(entry.Key);
-
-                if (entry.Value.IsAlive)
-                    _board.PlaceCellWithKey(entry.Key.y, entry.Key.x, new Cell());
-            }
+            // Add the new cells.
+            foreach(Coordinate cell in newCells)
+                _board.PlaceCellWithKey(cell);
         }
 
-
-        // Counts the number of live cells arround a certain cell.
-        // The dead cells around it will be added to the _candidateCells dictionary and their
-        // "Neighbours" value will increase.
-        /*
-         X X X
-         X O X
-         X X X
-         */
-        private void ExploreCellNeighbours(KeyValuePair<(int, int), Cell> entry)
+        private List<Coordinate> GetDeadNeighbours(Coordinate cell)
         {
-            const int outOfBoundsLimit = 200;
+            List<Coordinate> deadNeighbours = new();
 
-            if (!entry.Value.IsAlive)
-                return;
-
-            (int y, int x) = entry.Key;
-
-            for (int i = y - 1; i <= y + 1; i++)
+            for (int i = cell.y - 1; i <= cell.y + 1; i++)
             {
-                for (int j = x - 1; j <= x + 1; j++)
+                for (int j = cell.x - 1; j <= cell.x + 1; j++)
                 {
-                    if (i < -outOfBoundsLimit || i > _width + outOfBoundsLimit)
+                    if (i == cell.y && j == cell.x)
                         continue;
 
-                    if (j < -outOfBoundsLimit || j > _height + outOfBoundsLimit)
-                        continue;
+                    Coordinate cellCoordinate = new(i, j);
 
-                    if (i == y && j == x)
-                        continue;
-
-                    if (_board.GetCells().ContainsKey((i, j)))
-                        entry.Value.Neighbours++;
-                    else
-                    {
-                        _candidateCells.TryAdd((i, j), new Cell(false));
-                        _candidateCells[(i, j)].Neighbours++;
-                    }
+                    if (!_board.CellsCoordinates.Contains(cellCoordinate))
+                        deadNeighbours.Add(cellCoordinate);
                 }
             }
+
+            return deadNeighbours;
         }
     }
 }

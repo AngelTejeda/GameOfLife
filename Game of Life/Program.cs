@@ -16,11 +16,11 @@
             width -= leftMargin + rightMargin + 2;
             
 
-            Board<Cell> board = new((height, width), (topMargin, leftMargin));
-            BoardManager<Cell> boardManager = new(board);
+            Board board = new((height, width), (topMargin, leftMargin));
+            GameManager boardManager = new(board);
 
             boardManager.DrawTitle();
-            boardManager.PlaceFigureAt(TempFigures.GetFlower(), 10, 10);
+            //boardManager.PlaceFigureAt(TempFigures.GetFlower(), 10, 10);
             boardManager.EditBoard();
 
             GameOfLife game = new(board);

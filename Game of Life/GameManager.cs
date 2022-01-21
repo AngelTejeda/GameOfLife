@@ -2,28 +2,34 @@
 
 namespace Game_of_Life
 {
-    class BoardManager<T> where T : new()
+    class GameManager
     {
-        private readonly Board<T> _board;
+        private readonly Board _board;
 
-        public BoardManager(Board<T> board)
+        public GameManager(Board board)
         {
             _board = board;
         }
 
-        public BoardManager((int width, int heigth) dimensions, (int leftMargin, int topMargin) margins)
+        public GameManager((int width, int heigth) dimensions, (int leftMargin, int topMargin) margins)
         {
             _board = new(dimensions, margins);
         }
 
-        public void PlaceFigureAt(int[,] figure, int y, int x)
+        public void PlaceFigureAt(int[,] figure, Coordinate cellCoordinate)
         {
             for (int i = 0; i < figure.GetLength(0); i++)
             {
                 for (int j = 0; j < figure.GetLength(1); j++)
                 {
+                    Coordinate coordinate = new()
+                    {
+                        y = cellCoordinate.y + i,
+                        x = cellCoordinate.x + j
+                    };
+
                     if (figure[i, j] == 1)
-                        _board.PlaceCellWithKey(y + i, x + j, new T());
+                        _board.PlaceCellWithKey(coordinate);
                 }
             }
         }
@@ -47,17 +53,23 @@ namespace Game_of_Life
                     margins,
                     Console.GetCursorPosition());
 
+                Coordinate boardCoordinate = new()
+                {
+                    y = yPos,
+                    x = xPos
+                };
+
                 switch (keyPressed)
                 {
                     case ConsoleKey.Enter:
                         {
-                            _board.PlaceCellAtBoard(yPos, xPos, new T());
+                            _board.PlaceCellAtBoard(boardCoordinate);
                             break;
                         }
 
                     case ConsoleKey.Backspace:
                         {
-                            _board.RemoveCellAtBoard(yPos, xPos);
+                            _board.RemoveCellAtBoard(boardCoordinate);
                             break;
                         }
 
@@ -108,7 +120,7 @@ namespace Game_of_Life
                 " ██  █   █ █     █ ████     ███  █        █████ █████ █     █████\n");
         }
 
-        private void WriteWithMargin(int margin, int line, string text)
+        private static void WriteWithMargin(int margin, int line, string text)
         {
             Console.SetCursorPosition(margin, line);
 

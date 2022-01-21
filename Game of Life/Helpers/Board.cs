@@ -5,6 +5,14 @@ namespace Game_of_Life
 {
     #region Board Explanation
     /*
+     ███  ███  ██   ██ ████     ███  █████    █     █████ █████ █████
+    █    █   █ █ █ █ █ █       █   █ █        █       █   █     █
+    █ ██ █████ █  █  █ ███     █   █ ███      █       █   ███   ███
+    █  █ █   █ █  █  █ █       █   █ █        █       █   █     █
+     ██  █   █ █     █ ████     ███  █        █████ █████ █     █████
+
+    topOffset = 0;
+    leftOffset = 0;
     ┌───────────────────────────────────────────────┐ ← Window
     │                               ┬               │
     │                               │               │
@@ -12,26 +20,42 @@ namespace Game_of_Life
     │          Board                │               │
     │            ↓                  ┴               │
     │            ┌───────────────────────┐ ┬        │
-    │            │X ← (0,0)              │ │        │
-    │ leftMargin │                       │ │ height │
+    │            │X ← Cell (0, 0)        │ │        │
+    │ leftMargin │    Board (0, 0)       │ │ height │
     │├──────────┤│                       │ │        │
     │            │                       │ │        │
     │            └───────────────────────┘ ┴        │
     │            ├───────────────────────┤          │
     │                      width                    │
     └───────────────────────────────────────────────┘
-     ███  ███  ██   ██ ████     ███  █████    █     █████ █████ █████
-    █    █   █ █ █ █ █ █       █   █ █        █       █   █     █
-    █ ██ █████ █  █  █ ███     █   █ ███      █       █   ███   ███
-    █  █ █   █ █  █  █ █       █   █ █        █       █   █     █
-     ██  █   █ █     █ ████     ███  █        █████ █████ █     █████
+
+
+    topOffset = 1;
+    leftOffset = 2;
+    ┌───────────────────────────────────────────────┐ ← Window
+    │                               ┬               │
+    │                               │               │
+    │                               │ topMargin     │
+    │          Board                │               │
+    │            ↓                  ┴               │
+    │            ┌───────────────────────┐ ┬        │
+    │            │                       │ │        │
+    │ leftMargin │  X ← Cell (0,0)       │ │ height │
+    │├──────────┤│      Board (1, 2)     │ │        │
+    │            │                       │ │        │
+    │            └───────────────────────┘ ┴        │
+    │            ├───────────────────────┤          │
+    │                      width                    │
+    └───────────────────────────────────────────────┘
+    
     Even if the offset changes, the coordinate (0, 0) for the board will always be the same.
     */
     #endregion
 
-    public class Board<T> where T : new()
+    public class Board
     {
-        private readonly Dictionary<(int y, int x), T> _cells;
+        public HashSet<Coordinate> CellsCoordinates { get; }
+
         private readonly int _height;
         private readonly int _width;
         private readonly int _leftMargin;
@@ -41,7 +65,7 @@ namespace Game_of_Life
 
         public Board((int height, int width) dimensions, (int topMargin, int leftMargin) margins)
         {
-            _cells = new();
+            CellsCoordinates = new();
             _height = dimensions.height;
             _width = dimensions.width;
             _leftMargin = margins.leftMargin;
@@ -49,11 +73,6 @@ namespace Game_of_Life
         }
 
         #region Getters
-        public Dictionary<(int y, int x), T> GetCells()
-        {
-            return _cells;
-        }
-
         public (int height, int width) GetDimensions()
         {
             return (_height, _width);
@@ -68,36 +87,40 @@ namespace Game_of_Life
         #region Coordinates
         // Given the coordinate (y, x) of a cell, it calculates the position inside the board where
         // the cell should be displayed considering the current offset and the position of the board.
-        private (int yPos, int xPos) CalculateBoardCoordinates(int y, int x)
+        private Coordinate CalculateBoardCoordinates(Coordinate cellCoordinate)
         {
-            int yPos = y + _topOffset;
-            int xPos = x + _leftOffset;
+            Coordinate boardCoordinate = new();
 
-            return (yPos, xPos);
+            boardCoordinate.y = cellCoordinate.y + _topOffset;
+            boardCoordinate.x = cellCoordinate.x + _leftOffset;
+
+            return boardCoordinate;
         }
 
         // Given the coordinate (yPos, xPos) inside the board, it calculates the coordinate of the cell
         // in the given position considering the current offset and the position of the board.
-        private (int yPrime, int xPrime) CalculateCellCoordinates(int yPos, int xPos)
+        private Coordinate CalculateCellCoordinates(Coordinate boardCoordinate)
         {
-            int y = yPos - _topOffset;
-            int x = xPos - _leftOffset;
+            Coordinate cellCoordinate = new();
 
-            return (y, x);
+            cellCoordinate.y = boardCoordinate.y - _topOffset;
+            cellCoordinate.x = boardCoordinate.x - _leftOffset;
+
+            return cellCoordinate;
         }
 
         // Verifies if the cell in the coordinate (y, x) should be displayed in the board, considering
         // the current offset and the position of the board.
-        private bool IsCoordinateDisplayed(int y, int x)
+        private bool IsCoordinateDisplayed(Coordinate cellCoordinate)
         {
-            (int yPos, int xPos) = CalculateBoardCoordinates(y, x);
+            Coordinate boardCoord = CalculateBoardCoordinates(cellCoordinate);
 
             // Check y
-            if (yPos < 0 || yPos > _height - 1)
+            if (boardCoord.y < 0 || boardCoord.y > _height - 1)
                 return false;
 
             // Check x
-            if (xPos < 0 || xPos > _width - 1)
+            if (boardCoord.x < 0 || boardCoord.x > _width - 1)
                 return false;
 
             return true;
@@ -107,21 +130,26 @@ namespace Game_of_Life
         #region Display
         // Writes a certain character inside the board. If the coordinate (y, x) is outside the
         // board range, it will  not be displayed.
-        private void DisplayCharAt(char c, int y, int x)
+        private void DisplayCharAt(char c, Coordinate coord)
         {
-            if (!IsCoordinateDisplayed(y, x))
+            if (!IsCoordinateDisplayed(coord))
                 return;
 
-            (int yPos, int xPos) = CalculateBoardCoordinates(y, x);
+            Coordinate boardCoord = CalculateBoardCoordinates(coord);
 
-            SetCursorInsideBoard(xPos, yPos);
+            SetCursorInsideBoard(boardCoord.x, boardCoord.y);
             Console.Write(c);
-            SetCursorInsideBoard(xPos, yPos);
+            SetCursorInsideBoard(boardCoord.x, boardCoord.y);
         }
 
-        private void SetCursorInsideBoard(int x, int y)
+        public void SetCursorInsideBoard(int x, int y)
         {
             Console.SetCursorPosition(_leftMargin + 1 + x, _topMargin + 1 + y);
+        }
+
+        public void SetCursorInsideBoard(Coordinate boardCoordinate)
+        {
+            SetCursorInsideBoard(boardCoordinate.y, boardCoordinate.x);
         }
 
         private void DrawBoarder()
@@ -157,15 +185,15 @@ namespace Game_of_Life
 
         private void DrawCells()
         {
-            foreach ((int y, int x) in _cells.Keys)
-                DisplayCharAt('█', y, x);
+            foreach (Coordinate cellCoordinate in CellsCoordinates)
+                DisplayCharAt('█', cellCoordinate);
         }
 
         public void ClearBoard()
         {
-            foreach ((int y, int x) in _cells.Keys)
+            foreach (Coordinate cellCoordinate in CellsCoordinates)
             {
-                DisplayCharAt(' ', y, x);
+                DisplayCharAt(' ', cellCoordinate);
             }
         }
 
@@ -190,40 +218,40 @@ namespace Game_of_Life
         #region Cell Management
         // Adds a coordinate to the Dictionary of selected coordinates.
         // If desired and posible to do so, the cell will be displayed in the board.
-        public void PlaceCellWithKey(int y, int x, T cellObject, bool display = true)
+        public void PlaceCellWithKey(Coordinate cellCoordinate, bool display = true)
         {
-            _cells.TryAdd((y, x), cellObject);
+            CellsCoordinates.Add(cellCoordinate);
 
             if (display)
-                DisplayCharAt('█', y, x);
+                DisplayCharAt('█', cellCoordinate);
         }
 
         // Removes a coordinate from the Dictionary of selected coordinates.
         // If desired and posible to do so, the cell will be removed from the board.
-        public void RemoveCellWithKey(int y, int x, bool display = true)
+        public void RemoveCellWithKey(Coordinate cellCoordinate, bool display = true)
         {
-            _cells.Remove((y, x));
+            CellsCoordinates.Remove(cellCoordinate);
 
             if (display)
-                DisplayCharAt(' ', y, x);
+                DisplayCharAt(' ', cellCoordinate);
         }
 
         // Recieves a coordinate (yPos, xPos) inside the board and adds its corresponding value to the
         // Dictionary.
-        public void PlaceCellAtBoard(int yPos, int xPos, T cellObject, bool display = true)
+        public void PlaceCellAtBoard(Coordinate boardCoordinate, bool display = true)
         {
-            (int y, int x) = CalculateCellCoordinates(yPos, xPos);
+            Coordinate cellCoordinate = CalculateCellCoordinates(boardCoordinate);
 
-            PlaceCellWithKey(y, x, cellObject, display);
+            PlaceCellWithKey(cellCoordinate, display);
         }
 
         // Recieves a coordinate (yPos, xPos) inside the board and removes its corresponding value from the
         // Dictionary.
-        public void RemoveCellAtBoard(int yPos, int xPos, bool display = true)
+        public void RemoveCellAtBoard(Coordinate boardCoordinate, bool display = true)
         {
-            (int y, int x) = CalculateCellCoordinates(yPos, xPos);
+            Coordinate cellCoordinate = CalculateCellCoordinates(boardCoordinate);
 
-            RemoveCellWithKey(y, x, display);
+            RemoveCellWithKey(cellCoordinate, display);
         }
         #endregion
 
